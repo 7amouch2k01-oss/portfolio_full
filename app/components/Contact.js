@@ -67,6 +67,23 @@ export default function Contact() {
         throw new Error(data.error || 'Failed to send message.');
       }
 
+      // Persist contact in localStorage so the admin dashboard can display it
+      try {
+        const newContact = {
+          id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          name: form.name,
+          email: form.email,
+          subject: form.subject,
+          message: form.message,
+          createdAt: new Date().toISOString(),
+          read: false,
+        };
+        const existing = JSON.parse(localStorage.getItem('portfolio_contacts') || '[]');
+        localStorage.setItem('portfolio_contacts', JSON.stringify([newContact, ...existing]));
+      } catch (_) {
+        // localStorage not available — ignore silently
+      }
+
       setStatus({
         type: 'success',
         message: data.message || "Message sent! I'll reply within 24 hours.",

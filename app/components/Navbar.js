@@ -15,8 +15,6 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Tooltip from '@mui/material/Tooltip';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { ORANGE, ORANGE_GRADIENT, BG_PAPER, BORDER_SUBTLE, BORDER_ORANGE } from '../theme';
@@ -31,33 +29,30 @@ const NAV_ITEMS = [
 
 export default function Navbar({ activeSection = 'home', onSelectSection, onTriggerSecret }) {
   const [open, setOpen] = useState(false);
-  const [clickStreak, setClickStreak] = useState(0);
+  const [clickCount, setClickCount] = useState(0);
+  const [clickTimer, setClickTimer] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Secret 4-click detection on the title
-  let clickTimeout = null;
+  // Silent 4-click Easter egg — no visual feedback at all
   const handleTitleClick = () => {
-    setClickStreak((prev) => {
-      const nextCount = prev + 1;
-      if (nextCount >= 4) {
+    setClickCount((prev) => {
+      const next = prev + 1;
+      if (next >= 4) {
+        if (clickTimer) clearTimeout(clickTimer);
+        setClickTimer(null);
         if (onTriggerSecret) onTriggerSecret();
         return 0;
       }
-      return nextCount;
+      if (clickTimer) clearTimeout(clickTimer);
+      const t = setTimeout(() => setClickCount(0), 1500);
+      setClickTimer(t);
+      return next;
     });
-
-    // Reset click counter if not completed within 1.5 seconds
-    if (clickTimeout) clearTimeout(clickTimeout);
-    clickTimeout = setTimeout(() => {
-      setClickStreak(0);
-    }, 1500);
   };
 
   const handleNavClick = (sectionId) => {
-    if (onSelectSection) {
-      onSelectSection(sectionId);
-    }
+    if (onSelectSection) onSelectSection(sectionId);
     setOpen(false);
   };
 
@@ -81,7 +76,7 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
             minHeight: { xs: 64, md: 72 },
           }}
         >
-          {/* Brand Logo & Title with 4-click secret Easter egg */}
+          {/* Brand Logo — 4-click Easter egg, fully invisible, no badges or hints */}
           <Box
             onClick={handleTitleClick}
             sx={{
@@ -89,20 +84,16 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
               alignItems: 'center',
               gap: 1.5,
               flexGrow: 1,
-              cursor: 'pointer',
+              cursor: 'default',
               userSelect: 'none',
-              transition: 'transform 0.15s ease',
-              '&:active': { transform: 'scale(0.97)' },
             }}
           >
             <Box
               sx={{
                 width: 10,
                 height: 10,
-                bgcolor: clickStreak > 0 ? '#FF8C00' : ORANGE,
-                transform: `rotate(${45 + clickStreak * 25}deg)`,
-                transition: 'all 0.2s',
-                boxShadow: clickStreak > 0 ? '0 0 10px #FF8C00' : 'none',
+                bgcolor: ORANGE,
+                transform: 'rotate(45deg)',
                 flexShrink: 0,
               }}
             />
@@ -113,31 +104,12 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
                   fontWeight: 900,
                   fontSize: '0.95rem',
                   letterSpacing: '0.12em',
-                  color: clickStreak >= 2 ? ORANGE : 'text.primary',
+                  color: 'text.primary',
                   textTransform: 'uppercase',
                   lineHeight: 1.1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
                 }}
               >
                 MA. RZEIGUI
-                {clickStreak > 0 && (
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '0.65rem',
-                      color: ORANGE,
-                      fontWeight: 800,
-                      bgcolor: 'rgba(232,114,21,0.15)',
-                      px: 0.6,
-                      py: 0.1,
-                      borderRadius: 0.5,
-                    }}
-                  >
-                    {clickStreak}/4
-                  </Box>
-                )}
               </Typography>
               <Typography
                 variant="caption"
@@ -153,7 +125,7 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
             </Box>
           </Box>
 
-          {/* Desktop Navigation Tabs */}
+          {/* Desktop Navigation */}
           {!isMobile && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {NAV_ITEMS.map((item) => {
@@ -219,7 +191,7 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
             </Box>
           )}
 
-          {/* Mobile Menu Icon */}
+          {/* Mobile Menu */}
           {isMobile && (
             <IconButton onClick={() => setOpen(true)} sx={{ color: 'text.primary' }}>
               <MenuIcon />
@@ -246,17 +218,12 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
         <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box
             onClick={handleTitleClick}
-            sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'default', userSelect: 'none' }}
           >
             <Box sx={{ width: 8, height: 8, bgcolor: ORANGE, transform: 'rotate(45deg)' }} />
             <Typography variant="body2" sx={{ fontWeight: 800, letterSpacing: '0.1em', fontSize: '0.8rem' }}>
               MA. RZEIGUI
             </Typography>
-            {clickStreak > 0 && (
-              <Typography variant="caption" sx={{ color: ORANGE, fontWeight: 700, fontSize: '0.7rem' }}>
-                ({clickStreak}/4)
-              </Typography>
-            )}
           </Box>
           <IconButton onClick={() => setOpen(false)} sx={{ color: 'text.primary' }}>
             <CloseIcon fontSize="small" />

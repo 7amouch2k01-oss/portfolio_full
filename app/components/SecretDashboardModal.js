@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import Box from '@mui/material/Box';
@@ -32,67 +32,62 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import { ORANGE, ORANGE_GRADIENT, BG_PAPER, BG_ELEVATED, BORDER_SUBTLE, BORDER_ORANGE } from '../theme';
 
+const ADMIN_PASSWORD = 'amine2026';
+const LS_KEY = 'portfolio_contacts';
+
+function loadContacts() {
+  try {
+    return JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function persistContacts(contacts) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(contacts));
+  } catch (_) {}
+}
+
 export default function SecretDashboardModal({ open, onClose }) {
-  const [step, setStep] = useState('auth'); // 'auth' | 'dashboard'
+  const [step, setStep] = useState('auth');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
-  const [savedPassword, setSavedPassword] = useState('');
-
-  // Fetch contacts from server with stored password
-  const fetchContacts = async (pwd) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/contact?pwd=${encodeURIComponent(pwd)}`, {
-        headers: {
-          Authorization: `Bearer ${pwd}`,
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed');
-      }
-      setContacts(data.contacts || []);
-      setSavedPassword(pwd);
-      setStep('dashboard');
-      setAuthError('');
-    } catch (err) {
-      setAuthError(err.message || 'Incorrect security password');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAuthSubmit = (e) => {
     e.preventDefault();
     if (!password) {
-      setAuthError('Please enter the security password');
+      setAuthError('Please enter the security password.');
       return;
     }
-    fetchContacts(password);
+    setLoading(true);
+    setTimeout(() => {
+      if (password === ADMIN_PASSWORD) {
+        const stored = loadContacts();
+        setContacts(stored);
+        setStep('dashboard');
+        setAuthError('');
+      } else {
+        setAuthError('Incorrect security password. Access denied.');
+      }
+      setLoading(false);
+    }, 600);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this contact message?')) return;
-    try {
-      const res = await fetch(`/api/contact?pwd=${encodeURIComponent(savedPassword)}&id=${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${savedPassword}`,
-        },
-      });
-      if (res.ok) {
-        setContacts((prev) => prev.filter((c) => c.id !== id));
-        if (selectedMessage && selectedMessage.id === id) {
-          setSelectedMessage(null);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to delete contact:', err);
-    }
+  const handleRefresh = () => {
+    setContacts(loadContacts());
+  };
+
+  const handleDelete = (id) => {
+    if (!confirm('Delete this message permanently?')) return;
+    const updated = contacts.filter((c) => c.id !== id);
+    setContacts(updated);
+    persistContacts(updated);
+    if (selectedMessage && selectedMessage.id === id) setSelectedMessage(null);
   };
 
   const handleCopy = (text, id) => {
@@ -111,7 +106,6 @@ export default function SecretDashboardModal({ open, onClose }) {
   const handleLogout = () => {
     setStep('auth');
     setPassword('');
-    setSavedPassword('');
     setSelectedMessage(null);
     setContacts([]);
   };
@@ -131,12 +125,12 @@ export default function SecretDashboardModal({ open, onClose }) {
             borderRadius: 2,
             boxShadow: '0 24px 70px rgba(0,0,0,0.85)',
             position: 'relative',
-            minHeight: step === 'dashboard' ? 620 : 360,
+            minHeight: step === 'dashboard' ? 620 : 340,
           },
         },
       }}
     >
-      {/* Top Close Button */}
+      {/* Close Button */}
       <IconButton
         onClick={handleClose}
         sx={{
@@ -145,13 +139,15 @@ export default function SecretDashboardModal({ open, onClose }) {
           right: 14,
           color: 'text.secondary',
           '&:hover': { color: ORANGE },
+          zIndex: 10,
         }}
       >
         <CloseIcon fontSize="small" />
       </IconButton>
 
       <DialogContent sx={{ p: { xs: 3, md: 4 } }}>
-        {/* STEP 1: PASSWORD AUTH */}
+
+        {/* ─── STEP 1: Auth ─── */}
         {step === 'auth' && (
           <Box
             component="form"
@@ -177,7 +173,7 @@ export default function SecretDashboardModal({ open, onClose }) {
                 mb: 2,
               }}
             >
-              <LockOutlinedIcon sx={{ color: ORANGE, fontSize: 30 }} />
+              <LockOutlinedIcon sx={{ color: ORANGE, fontSize: 28 }} />
             </Box>
 
             <Typography
@@ -186,18 +182,15 @@ export default function SecretDashboardModal({ open, onClose }) {
                 color: ORANGE,
                 fontFamily: '"Roboto Mono", monospace',
                 letterSpacing: '0.2em',
-                fontSize: '0.68rem',
+                fontSize: '0.65rem',
+                mb: 0.5,
               }}
             >
               RESTRICTED ACCESS
             </Typography>
 
-            <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.01em' }}>
-              Secret Contacts Portal
-            </Typography>
-
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3, fontSize: '0.85rem' }}>
-              Enter your administrative passkey to unlock the private inquiries dashboard.
+            <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.5, letterSpacing: '-0.01em' }}>
+              Admin Portal
             </Typography>
 
             {authError && (
@@ -210,8 +203,8 @@ export default function SecretDashboardModal({ open, onClose }) {
               fullWidth
               autoFocus
               type="password"
-              label="Admin Passkey"
-              placeholder="Enter password..."
+              label="Security Passkey"
+              placeholder="••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
@@ -223,6 +216,7 @@ export default function SecretDashboardModal({ open, onClose }) {
               type="submit"
               variant="contained"
               disabled={loading}
+              endIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
               sx={{
                 background: ORANGE_GRADIENT,
                 color: '#fff',
@@ -233,19 +227,15 @@ export default function SecretDashboardModal({ open, onClose }) {
                 '&:hover': { boxShadow: `0 0 30px rgba(232,114,21,0.55)` },
               }}
             >
-              {loading ? <CircularProgress size={22} color="inherit" /> : 'UNLOCK DASHBOARD'}
+              {loading ? 'Verifying...' : 'UNLOCK'}
             </Button>
-
-            <Typography variant="caption" sx={{ color: 'text.secondary', mt: 2, fontSize: '0.7rem' }}>
-              Hint: Default password is <strong>amine2026</strong>
-            </Typography>
           </Box>
         )}
 
-        {/* STEP 2: SECRET CONTACTS DASHBOARD */}
+        {/* ─── STEP 2: Dashboard ─── */}
         {step === 'dashboard' && (
           <Box>
-            {/* Header Toolbar */}
+            {/* Header */}
             <Box
               sx={{
                 display: 'flex',
@@ -260,7 +250,7 @@ export default function SecretDashboardModal({ open, onClose }) {
             >
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-                  <Box sx={{ width: 10, height: 10, bgcolor: '#10B981', borderRadius: '50%' }} />
+                  <Box sx={{ width: 8, height: 8, bgcolor: '#10B981', borderRadius: '50%' }} />
                   <Typography
                     variant="overline"
                     sx={{
@@ -268,17 +258,17 @@ export default function SecretDashboardModal({ open, onClose }) {
                       fontFamily: '"Roboto Mono", monospace',
                       letterSpacing: '0.15em',
                       fontWeight: 800,
-                      fontSize: '0.7rem',
+                      fontSize: '0.68rem',
                     }}
                   >
-                    CONFIDENTIAL INBOX
+                    LIVE INBOX
                   </Typography>
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: 800, fontSize: '1.6rem' }}>
-                  Received Inquiries &amp; Leads
+                <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                  Contact Submissions
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
-                  Total contacts stored: <strong>{contacts.length}</strong>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                  {contacts.length} message{contacts.length !== 1 ? 's' : ''} received
                 </Typography>
               </Box>
 
@@ -287,8 +277,7 @@ export default function SecretDashboardModal({ open, onClose }) {
                   size="small"
                   variant="outlined"
                   startIcon={<RefreshIcon />}
-                  onClick={() => fetchContacts(savedPassword)}
-                  disabled={loading}
+                  onClick={handleRefresh}
                   sx={{
                     borderColor: BORDER_SUBTLE,
                     color: 'text.secondary',
@@ -300,17 +289,16 @@ export default function SecretDashboardModal({ open, onClose }) {
                 <Button
                   size="small"
                   variant="outlined"
-                  color="error"
                   startIcon={<LogoutIcon />}
                   onClick={handleLogout}
-                  sx={{ borderColor: 'rgba(239,68,68,0.3)', color: '#EF4444' }}
+                  sx={{ borderColor: 'rgba(239,68,68,0.3)', color: '#EF4444', '&:hover': { bgcolor: 'rgba(239,68,68,0.06)' } }}
                 >
-                  Lock Portal
+                  Lock
                 </Button>
               </Stack>
             </Box>
 
-            {/* Content Area: Table / Empty State */}
+            {/* Empty State */}
             {contacts.length === 0 ? (
               <Box
                 sx={{
@@ -321,47 +309,49 @@ export default function SecretDashboardModal({ open, onClose }) {
                   borderRadius: 2,
                 }}
               >
-                <EmailIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.5, mb: 1.5 }} />
+                <EmailIcon sx={{ fontSize: 44, color: 'text.secondary', opacity: 0.4, mb: 1.5 }} />
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-                  No Inquiries Received Yet
+                  No Messages Yet
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 400, mx: 'auto' }}>
-                  Whenever a visitor sends a message from your Contact section, it will appear here in real-time.
+                <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 360, mx: 'auto' }}>
+                  Messages submitted via the Contact form will appear here automatically.
                 </Typography>
               </Box>
             ) : (
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: selectedMessage ? '1.2fr 1fr' : '1fr' }, gap: 3 }}>
-                {/* Messages List Table */}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', lg: selectedMessage ? '1.3fr 1fr' : '1fr' },
+                  gap: 3,
+                }}
+              >
+                {/* Table */}
                 <TableContainer
                   component={Paper}
                   sx={{
                     bgcolor: BG_ELEVATED,
                     border: `1px solid ${BORDER_SUBTLE}`,
                     borderRadius: 2,
-                    maxHeight: 480,
+                    maxHeight: 460,
                   }}
                 >
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ bgcolor: '#161616', color: ORANGE, fontWeight: 700, fontSize: '0.72rem' }}>
-                          DATE
-                        </TableCell>
-                        <TableCell sx={{ bgcolor: '#161616', color: ORANGE, fontWeight: 700, fontSize: '0.72rem' }}>
-                          SENDER
-                        </TableCell>
-                        <TableCell sx={{ bgcolor: '#161616', color: ORANGE, fontWeight: 700, fontSize: '0.72rem' }}>
-                          SUBJECT
-                        </TableCell>
-                        <TableCell sx={{ bgcolor: '#161616', color: ORANGE, fontWeight: 700, fontSize: '0.72rem' }} align="right">
-                          ACTIONS
-                        </TableCell>
+                        {['DATE', 'SENDER', 'SUBJECT', ''].map((h) => (
+                          <TableCell
+                            key={h}
+                            sx={{ bgcolor: '#161616', color: ORANGE, fontWeight: 700, fontSize: '0.68rem' }}
+                          >
+                            {h}
+                          </TableCell>
+                        ))}
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {contacts.map((c) => {
                         const isSelected = selectedMessage && selectedMessage.id === c.id;
-                        const dateFormatted = new Date(c.createdAt).toLocaleDateString('en-US', {
+                        const dateStr = new Date(c.createdAt).toLocaleString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           hour: '2-digit',
@@ -375,22 +365,21 @@ export default function SecretDashboardModal({ open, onClose }) {
                             sx={{
                               cursor: 'pointer',
                               bgcolor: isSelected ? 'rgba(232,114,21,0.08)' : 'inherit',
-                              '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
                             }}
                           >
-                            <TableCell sx={{ color: 'text.secondary', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                              {dateFormatted}
+                            <TableCell sx={{ color: 'text.secondary', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
+                              {dateStr}
                             </TableCell>
                             <TableCell>
-                              <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.82rem', color: '#fff' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
                                 {c.name}
                               </Typography>
                               <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                                 {c.email}
                               </Typography>
                             </TableCell>
-                            <TableCell sx={{ color: 'text.primary', fontSize: '0.82rem', maxWidth: 220 }}>
-                              <Typography noWrap sx={{ fontSize: '0.82rem' }}>
+                            <TableCell>
+                              <Typography noWrap sx={{ fontSize: '0.82rem', maxWidth: 200 }}>
                                 {c.subject}
                               </Typography>
                             </TableCell>
@@ -410,7 +399,7 @@ export default function SecretDashboardModal({ open, onClose }) {
                   </Table>
                 </TableContainer>
 
-                {/* Message Detail Card */}
+                {/* Detail Panel */}
                 {selectedMessage && (
                   <Box
                     sx={{
@@ -420,25 +409,25 @@ export default function SecretDashboardModal({ open, onClose }) {
                       p: 3,
                       display: 'flex',
                       flexDirection: 'column',
-                      maxHeight: 480,
+                      maxHeight: 460,
                       overflowY: 'auto',
                     }}
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                       <Box>
                         <Chip
-                          label="MESSAGE DETAILS"
+                          label="MESSAGE"
                           size="small"
                           sx={{
                             bgcolor: 'rgba(232,114,21,0.12)',
                             color: ORANGE,
                             border: `1px solid ${BORDER_ORANGE}`,
-                            fontSize: '0.62rem',
+                            fontSize: '0.6rem',
                             fontWeight: 800,
                             mb: 1,
                           }}
                         />
-                        <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1rem' }}>
                           {selectedMessage.subject}
                         </Typography>
                       </Box>
@@ -449,33 +438,32 @@ export default function SecretDashboardModal({ open, onClose }) {
 
                     <Divider sx={{ mb: 2 }} />
 
-                    {/* Sender Info */}
-                    <Stack spacing={1.2} mb={2.5}>
+                    <Stack spacing={1} mb={2.5}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <PersonIcon sx={{ color: ORANGE, fontSize: 18 }} />
+                        <PersonIcon sx={{ color: ORANGE, fontSize: 16 }} />
                         <Typography variant="body2" sx={{ fontWeight: 700 }}>
                           {selectedMessage.name}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <EmailIcon sx={{ color: ORANGE, fontSize: 18 }} />
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        <EmailIcon sx={{ color: ORANGE, fontSize: 16 }} />
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
                           {selectedMessage.email}
                         </Typography>
                         <IconButton
                           size="small"
                           onClick={() => handleCopy(selectedMessage.email, selectedMessage.id)}
-                          sx={{ color: 'text.secondary', p: 0.5 }}
+                          sx={{ color: 'text.secondary', p: 0.3 }}
                         >
                           {copiedId === selectedMessage.id ? (
-                            <CheckIcon sx={{ fontSize: 14, color: '#10B981' }} />
+                            <CheckIcon sx={{ fontSize: 13, color: '#10B981' }} />
                           ) : (
-                            <ContentCopyIcon sx={{ fontSize: 14 }} />
+                            <ContentCopyIcon sx={{ fontSize: 13 }} />
                           )}
                         </IconButton>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <ScheduleIcon sx={{ color: ORANGE, fontSize: 18 }} />
+                        <ScheduleIcon sx={{ color: ORANGE, fontSize: 16 }} />
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           {new Date(selectedMessage.createdAt).toLocaleString()}
                         </Typography>
@@ -484,20 +472,19 @@ export default function SecretDashboardModal({ open, onClose }) {
 
                     <Divider sx={{ mb: 2 }} />
 
-                    {/* Full Message Body */}
-                    <Typography variant="overline" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                      MESSAGE CONTENT
+                    <Typography variant="overline" sx={{ color: 'text.secondary', fontSize: '0.62rem' }}>
+                      MESSAGE
                     </Typography>
                     <Box
                       sx={{
+                        mt: 1,
                         p: 2,
-                        bgcolor: 'rgba(0,0,0,0.35)',
+                        bgcolor: 'rgba(0,0,0,0.3)',
                         border: `1px solid ${BORDER_SUBTLE}`,
                         borderRadius: 1,
                         flexGrow: 1,
                         whiteSpace: 'pre-wrap',
-                        fontFamily: 'inherit',
-                        fontSize: '0.88rem',
+                        fontSize: '0.87rem',
                         lineHeight: 1.7,
                         color: 'text.primary',
                         mb: 2.5,
@@ -506,7 +493,6 @@ export default function SecretDashboardModal({ open, onClose }) {
                       {selectedMessage.message}
                     </Box>
 
-                    {/* Action Bar */}
                     <Stack direction="row" spacing={1.5}>
                       <Button
                         variant="contained"
@@ -520,7 +506,7 @@ export default function SecretDashboardModal({ open, onClose }) {
                           fontSize: '0.75rem',
                         }}
                       >
-                        Reply via Email
+                        Reply
                       </Button>
                       <Button
                         variant="outlined"
