@@ -86,9 +86,8 @@ export default function Contact() {
     <Box
       id="contact"
       sx={{
-        py: { xs: 10, md: 14 },
+        py: { xs: 5, md: 8 },
         bgcolor: 'background.default',
-        borderTop: `1px solid ${BORDER_SUBTLE}`,
       }}
     >
       <Container maxWidth="lg">

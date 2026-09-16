@@ -6,12 +6,8 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import DownloadIcon from '@mui/icons-material/Download';
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import { ORANGE, ORANGE_GRADIENT, HERO_GRADIENT } from '../theme';
-
-function scrollTo(id) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-}
 
 const STATS = [
   { value: '5+', label: 'YEARS EXP.' },
@@ -19,13 +15,19 @@ const STATS = [
   { value: '15+', label: 'TECHNOLOGIES' },
 ];
 
-export default function Hero() {
+export default function Hero({ onNavigate }) {
+  const handleNav = (section) => {
+    if (onNavigate) {
+      onNavigate(section);
+    }
+  };
+
   return (
     <Box
       id="hero"
       sx={{
         position: 'relative',
-        minHeight: '100vh',
+        minHeight: { xs: 'calc(100vh - 72px)', md: '84vh' },
         display: 'flex',
         alignItems: 'center',
         overflow: 'hidden',
@@ -68,7 +70,7 @@ export default function Hero() {
           bottom: 0,
           left: 0,
           right: 0,
-          height: 200,
+          height: 120,
           background: 'linear-gradient(to top, #0a0a0a 0%, transparent 100%)',
         }}
       />
@@ -77,9 +79,8 @@ export default function Hero() {
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <Box
           sx={{
-            maxWidth: { xs: '100%', md: '55%', lg: '52%' },
-            pt: { xs: 14, md: 0 },
-            pb: { xs: 8, md: 0 },
+            maxWidth: { xs: '100%', md: '58%', lg: '54%' },
+            py: { xs: 8, md: 6 },
           }}
         >
           {/* Label */}
@@ -101,7 +102,7 @@ export default function Hero() {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem', lg: '5rem' },
+              fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem', lg: '4.8rem' },
               fontWeight: 900,
               lineHeight: 1.0,
               letterSpacing: '-0.03em',
@@ -115,7 +116,7 @@ export default function Hero() {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem', lg: '5rem' },
+              fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem', lg: '4.8rem' },
               fontWeight: 900,
               lineHeight: 1.0,
               letterSpacing: '-0.03em',
@@ -130,7 +131,7 @@ export default function Hero() {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem', lg: '5rem' },
+              fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem', lg: '4.8rem' },
               fontWeight: 900,
               lineHeight: 1.0,
               letterSpacing: '-0.03em',
@@ -164,7 +165,7 @@ export default function Hero() {
               variant="contained"
               size="large"
               endIcon={<ArrowForwardIcon />}
-              onClick={() => scrollTo('projects')}
+              onClick={() => handleNav('projects')}
               sx={{
                 background: ORANGE_GRADIENT,
                 color: '#fff',
@@ -182,8 +183,8 @@ export default function Hero() {
             <Button
               variant="outlined"
               size="large"
-              startIcon={<DownloadIcon />}
-              onClick={() => scrollTo('contact')}
+              startIcon={<EmailOutlinedIcon />}
+              onClick={() => handleNav('contact')}
               sx={{
                 borderColor: 'rgba(255,255,255,0.25)',
                 color: 'text.primary',
@@ -230,39 +231,6 @@ export default function Hero() {
           </Stack>
         </Box>
       </Container>
-
-      {/* Scroll indicator */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 40,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 1,
-          opacity: 0.5,
-        }}
-      >
-        <Typography variant="overline" sx={{ fontSize: '0.58rem', letterSpacing: '0.18em' }}>
-          SCROLL
-        </Typography>
-        <Box
-          sx={{
-            width: 1,
-            height: 40,
-            bgcolor: ORANGE,
-            animation: 'scrollPulse 1.5s ease-in-out infinite',
-            '@keyframes scrollPulse': {
-              '0%': { opacity: 1, transform: 'scaleY(1)' },
-              '50%': { opacity: 0.4, transform: 'scaleY(0.5)' },
-              '100%': { opacity: 1, transform: 'scaleY(1)' },
-            },
-          }}
-        />
-      </Box>
     </Box>
   );
 }
-

@@ -95,9 +95,8 @@ export default function Projects() {
     <Box
       id="projects"
       sx={{
-        py: { xs: 10, md: 14 },
+        py: { xs: 5, md: 8 },
         bgcolor: '#0d0d0d',
-        borderTop: `1px solid ${BORDER_SUBTLE}`,
       }}
     >
       <Container maxWidth="lg">
