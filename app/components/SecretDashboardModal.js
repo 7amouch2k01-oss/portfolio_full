@@ -32,23 +32,6 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import { ORANGE, ORANGE_GRADIENT, BG_PAPER, BG_ELEVATED, BORDER_SUBTLE, BORDER_ORANGE } from '../theme';
 
-const ADMIN_PASSWORD = 'amine2026';
-const LS_KEY = 'portfolio_contacts';
-
-function loadContacts() {
-  try {
-    return JSON.parse(localStorage.getItem(LS_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function persistContacts(contacts) {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(contacts));
-  } catch (_) {}
-}
-
 export default function SecretDashboardModal({ open, onClose }) {
   const [step, setStep] = useState('auth');
   const [password, setPassword] = useState('');
@@ -57,6 +40,30 @@ export default function SecretDashboardModal({ open, onClose }) {
   const [loading, setLoading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [savedPassword, setSavedPassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(null);
+  const [fetchError, setFetchError] = useState('');
+
+  // ── Fetch all contacts from MongoDB via API ──────────────────────────────
+  const fetchContacts = async (pwd) => {
+    setLoading(true);
+    setFetchError('');
+    try {
+      const res = await fetch('/api/contact', {
+        headers: { Authorization: `Bearer ${pwd}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Authentication failed');
+      setContacts(data.contacts || []);
+      setSavedPassword(pwd);
+      setStep('dashboard');
+      setAuthError('');
+    } catch (err) {
+      setAuthError(err.message || 'Incorrect security password');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAuthSubmit = (e) => {
     e.preventDefault();
@@ -64,30 +71,29 @@ export default function SecretDashboardModal({ open, onClose }) {
       setAuthError('Please enter the security password.');
       return;
     }
-    setLoading(true);
-    setTimeout(() => {
-      if (password === ADMIN_PASSWORD) {
-        const stored = loadContacts();
-        setContacts(stored);
-        setStep('dashboard');
-        setAuthError('');
-      } else {
-        setAuthError('Incorrect security password. Access denied.');
-      }
-      setLoading(false);
-    }, 600);
+    fetchContacts(password);
   };
 
-  const handleRefresh = () => {
-    setContacts(loadContacts());
-  };
+  const handleRefresh = () => fetchContacts(savedPassword);
 
-  const handleDelete = (id) => {
+  // ── Delete via API ───────────────────────────────────────────────────────
+  const handleDelete = async (id) => {
     if (!confirm('Delete this message permanently?')) return;
-    const updated = contacts.filter((c) => c.id !== id);
-    setContacts(updated);
-    persistContacts(updated);
-    if (selectedMessage && selectedMessage.id === id) setSelectedMessage(null);
+    setDeleteLoading(id);
+    try {
+      const res = await fetch(`/api/contact?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${savedPassword}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed');
+      setContacts((prev) => prev.filter((c) => c.id !== id));
+      if (selectedMessage && selectedMessage.id === id) setSelectedMessage(null);
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    } finally {
+      setDeleteLoading(null);
+    }
   };
 
   const handleCopy = (text, id) => {
@@ -100,14 +106,17 @@ export default function SecretDashboardModal({ open, onClose }) {
     setPassword('');
     setAuthError('');
     setSelectedMessage(null);
+    setFetchError('');
     onClose();
   };
 
   const handleLogout = () => {
     setStep('auth');
     setPassword('');
+    setSavedPassword('');
     setSelectedMessage(null);
     setContacts([]);
+    setFetchError('');
   };
 
   return (
@@ -147,7 +156,7 @@ export default function SecretDashboardModal({ open, onClose }) {
 
       <DialogContent sx={{ p: { xs: 3, md: 4 } }}>
 
-        {/* ─── STEP 1: Auth ─── */}
+        {/* ─── STEP 1: Auth ─────────────────────────────────────────────────── */}
         {step === 'auth' && (
           <Box
             component="form"
@@ -227,12 +236,12 @@ export default function SecretDashboardModal({ open, onClose }) {
                 '&:hover': { boxShadow: `0 0 30px rgba(232,114,21,0.55)` },
               }}
             >
-              {loading ? 'Verifying...' : 'UNLOCK'}
+              {loading ? 'Verifying…' : 'UNLOCK'}
             </Button>
           </Box>
         )}
 
-        {/* ─── STEP 2: Dashboard ─── */}
+        {/* ─── STEP 2: Dashboard ────────────────────────────────────────────── */}
         {step === 'dashboard' && (
           <Box>
             {/* Header */}
@@ -261,14 +270,14 @@ export default function SecretDashboardModal({ open, onClose }) {
                       fontSize: '0.68rem',
                     }}
                   >
-                    LIVE INBOX
+                    LIVE DATABASE
                   </Typography>
                 </Box>
                 <Typography variant="h5" sx={{ fontWeight: 800 }}>
                   Contact Submissions
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
-                  {contacts.length} message{contacts.length !== 1 ? 's' : ''} received
+                  {contacts.length} message{contacts.length !== 1 ? 's' : ''} in database
                 </Typography>
               </Box>
 
@@ -276,8 +285,9 @@ export default function SecretDashboardModal({ open, onClose }) {
                 <Button
                   size="small"
                   variant="outlined"
-                  startIcon={<RefreshIcon />}
+                  startIcon={loading ? <CircularProgress size={14} /> : <RefreshIcon />}
                   onClick={handleRefresh}
+                  disabled={loading}
                   sx={{
                     borderColor: BORDER_SUBTLE,
                     color: 'text.secondary',
@@ -291,12 +301,22 @@ export default function SecretDashboardModal({ open, onClose }) {
                   variant="outlined"
                   startIcon={<LogoutIcon />}
                   onClick={handleLogout}
-                  sx={{ borderColor: 'rgba(239,68,68,0.3)', color: '#EF4444', '&:hover': { bgcolor: 'rgba(239,68,68,0.06)' } }}
+                  sx={{
+                    borderColor: 'rgba(239,68,68,0.3)',
+                    color: '#EF4444',
+                    '&:hover': { bgcolor: 'rgba(239,68,68,0.06)' },
+                  }}
                 >
                   Lock
                 </Button>
               </Stack>
             </Box>
+
+            {fetchError && (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {fetchError}
+              </Alert>
+            )}
 
             {/* Empty State */}
             {contacts.length === 0 ? (
@@ -314,7 +334,7 @@ export default function SecretDashboardModal({ open, onClose }) {
                   No Messages Yet
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 360, mx: 'auto' }}>
-                  Messages submitted via the Contact form will appear here automatically.
+                  Messages submitted via the Contact form will appear here automatically from the database.
                 </Typography>
               </Box>
             ) : (
@@ -325,7 +345,7 @@ export default function SecretDashboardModal({ open, onClose }) {
                   gap: 3,
                 }}
               >
-                {/* Table */}
+                {/* Contacts Table */}
                 <TableContainer
                   component={Paper}
                   sx={{
@@ -341,7 +361,13 @@ export default function SecretDashboardModal({ open, onClose }) {
                         {['DATE', 'SENDER', 'SUBJECT', ''].map((h) => (
                           <TableCell
                             key={h}
-                            sx={{ bgcolor: '#161616', color: ORANGE, fontWeight: 700, fontSize: '0.68rem' }}
+                            sx={{
+                              bgcolor: '#161616',
+                              color: ORANGE,
+                              fontWeight: 700,
+                              fontSize: '0.68rem',
+                              letterSpacing: '0.1em',
+                            }}
                           >
                             {h}
                           </TableCell>
@@ -386,10 +412,15 @@ export default function SecretDashboardModal({ open, onClose }) {
                             <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                               <IconButton
                                 size="small"
+                                disabled={deleteLoading === c.id}
                                 onClick={() => handleDelete(c.id)}
                                 sx={{ color: 'text.secondary', '&:hover': { color: '#EF4444' } }}
                               >
-                                <DeleteOutlinedIcon fontSize="small" />
+                                {deleteLoading === c.id ? (
+                                  <CircularProgress size={14} />
+                                ) : (
+                                  <DeleteOutlinedIcon fontSize="small" />
+                                )}
                               </IconButton>
                             </TableCell>
                           </TableRow>
@@ -413,7 +444,14 @@ export default function SecretDashboardModal({ open, onClose }) {
                       overflowY: 'auto',
                     }}
                   >
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        mb: 2,
+                      }}
+                    >
                       <Box>
                         <Chip
                           label="MESSAGE"
@@ -511,7 +549,14 @@ export default function SecretDashboardModal({ open, onClose }) {
                       <Button
                         variant="outlined"
                         color="error"
-                        startIcon={<DeleteOutlinedIcon />}
+                        disabled={deleteLoading === selectedMessage.id}
+                        startIcon={
+                          deleteLoading === selectedMessage.id ? (
+                            <CircularProgress size={14} />
+                          ) : (
+                            <DeleteOutlinedIcon />
+                          )
+                        }
                         onClick={() => handleDelete(selectedMessage.id)}
                         sx={{ fontSize: '0.75rem' }}
                       >

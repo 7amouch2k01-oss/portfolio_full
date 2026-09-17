@@ -55,9 +55,7 @@ export default function Contact() {
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
 
@@ -65,23 +63,6 @@ export default function Contact() {
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to send message.');
-      }
-
-      // Persist contact in localStorage so the admin dashboard can display it
-      try {
-        const newContact = {
-          id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-          name: form.name,
-          email: form.email,
-          subject: form.subject,
-          message: form.message,
-          createdAt: new Date().toISOString(),
-          read: false,
-        };
-        const existing = JSON.parse(localStorage.getItem('portfolio_contacts') || '[]');
-        localStorage.setItem('portfolio_contacts', JSON.stringify([newContact, ...existing]));
-      } catch (_) {
-        // localStorage not available — ignore silently
       }
 
       setStatus({

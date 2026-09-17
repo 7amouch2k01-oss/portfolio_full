@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server';
-import { saveContact, getContacts, deleteContact } from '../../lib/contactsStore';
+import { ObjectId } from 'mongodb';
+import { getContactsCollection } from '../../lib/mongodb';
 
 const ADMIN_PASSWORD = process.env.ADMIN_SECRET_PASSWORD || 'amine2026';
 
-// Helper to verify admin password
 function isAuthorized(request) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    if (token === ADMIN_PASSWORD) return true;
+  const auth = request.headers.get('authorization');
+  if (auth && auth.startsWith('Bearer ')) {
+    return auth.substring(7) === ADMIN_PASSWORD;
   }
   const url = new URL(request.url);
-  const pwdParam = url.searchParams.get('pwd');
-  return pwdParam === ADMIN_PASSWORD;
+  return url.searchParams.get('pwd') === ADMIN_PASSWORD;
 }
 
-// POST: Public submission of contact inquiries
+// ── POST: Public — submit a contact message ──────────────────────────────────
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -23,12 +21,11 @@ export async function POST(request) {
 
     if (!name || !email || !subject || !message) {
       return NextResponse.json(
-        { error: 'All fields (name, email, subject, message) are required.' },
+        { error: 'All fields are required.' },
         { status: 400 }
       );
     }
 
-    // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -37,75 +34,104 @@ export async function POST(request) {
       );
     }
 
-    // 1. Save to secret contacts store
-    const savedContact = saveContact({ name, email, subject, message });
+    // 1. Save to MongoDB
+    const collection = await getContactsCollection();
+    const doc = {
+      name,
+      email,
+      subject,
+      message,
+      createdAt: new Date(),
+      read: false,
+    };
+    await collection.insertOne(doc);
 
-    // 2. Dispatch to Web3Forms if configured
-    const accessKey = process.env.WEB3FORMS_ACCESS_KEY || process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY;
-    const recipientEmail = process.env.CONTACT_EMAIL || 'contact@marzeigui.dev';
-
+    // 2. Forward via Web3Forms if configured (best-effort, never block submission)
+    const accessKey = process.env.WEB3FORMS_ACCESS_KEY;
     if (accessKey) {
       try {
         await fetch('https://api.web3forms.com/submit', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
             access_key: accessKey,
             name,
             email,
             subject: `[Portfolio Contact] ${subject}`,
             message,
-            to_email: recipientEmail,
+            to_email: process.env.CONTACT_EMAIL || 'contact@marzeigui.dev',
           }),
         });
-      } catch (dispatchErr) {
-        console.warn('Web3Forms dispatch warning (message safely stored locally):', dispatchErr);
+      } catch (emailErr) {
+        console.warn('Web3Forms dispatch warning (message safely stored in DB):', emailErr.message);
       }
     }
 
     return NextResponse.json(
-      {
-        success: true,
-        message: 'Your message has been sent successfully! I will get back to you within 24 hours.',
-        contact: savedContact,
-      },
+      { success: true, message: "Your message has been sent! I'll get back to you within 24 hours." },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error handling contact submission:', error);
+    console.error('Contact POST error:', error);
     return NextResponse.json(
-      { error: error.message || 'An error occurred while sending your message. Please try again later.' },
+      { error: 'An unexpected error occurred. Please try again.' },
       { status: 500 }
     );
   }
 }
 
-// GET: Retrieve all contacts for secret dashboard (protected)
+// ── GET: Admin — fetch all contacts (password-protected) ─────────────────────
 export async function GET(request) {
   if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized. Invalid security key.' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
-  const contacts = getContacts();
-  return NextResponse.json({ success: true, contacts }, { status: 200 });
+  try {
+    const collection = await getContactsCollection();
+    const contacts = await collection
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    // Convert ObjectId to string for JSON serialization
+    const serialized = contacts.map((c) => ({
+      ...c,
+      id: c._id.toString(),
+      _id: undefined,
+      createdAt: c.createdAt instanceof Date ? c.createdAt.toISOString() : c.createdAt,
+    }));
+
+    return NextResponse.json({ success: true, contacts: serialized }, { status: 200 });
+  } catch (error) {
+    console.error('Contact GET error:', error);
+    return NextResponse.json({ error: 'Failed to fetch contacts.' }, { status: 500 });
+  }
 }
 
-// DELETE: Remove a contact from dashboard (protected)
+// ── DELETE: Admin — delete a contact by ID (password-protected) ──────────────
 export async function DELETE(request) {
   if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized. Invalid security key.' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
-  const url = new URL(request.url);
-  const id = url.searchParams.get('id');
+  try {
+    const url = new URL(request.url);
+    const id = url.searchParams.get('id');
 
-  if (!id) {
-    return NextResponse.json({ error: 'Message ID is required' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: 'Contact ID is required.' }, { status: 400 });
+    }
+
+    const collection = await getContactsCollection();
+    const result = await collection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ error: 'Contact not found.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error('Contact DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete contact.' }, { status: 500 });
   }
-
-  const success = deleteContact(id);
-  return NextResponse.json({ success }, { status: success ? 200 : 500 });
 }
