@@ -13,14 +13,10 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import Tooltip from '@mui/material/Tooltip';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { useColorMode } from '../ColorModeContext';
 import { ORANGE, ORANGE_GRADIENT, BORDER_ORANGE } from '../theme';
 
 const NAV_ITEMS = [
@@ -37,8 +33,6 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
   const [clickTimer, setClickTimer] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { mode, toggleColorMode } = useColorMode();
-  const isDark = mode === 'dark';
 
   // Silent 4-click Easter egg — no visual feedback at all
   const handleTitleClick = () => {
@@ -143,7 +137,7 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
                     key={item.id}
                     onClick={() => handleNavClick(item.id)}
                     sx={{
-                      color: isActive ? (isDark ? '#fff' : ORANGE) : 'text.secondary',
+                      color: isActive ? '#fff' : 'text.secondary',
                       fontSize: '0.72rem',
                       letterSpacing: '0.12em',
                       fontWeight: isActive ? 800 : 600,
@@ -155,7 +149,7 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
                       borderRadius: 1,
                       '&:hover': {
                         color: ORANGE,
-                        bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                        bgcolor: 'rgba(255,255,255,0.03)',
                       },
                       transition: 'all 0.2s',
                     }}
@@ -178,38 +172,11 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
                 );
               })}
 
-              {/* Theme Toggle Button (Desktop) */}
-              <Tooltip title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
-                <IconButton
-                  onClick={toggleColorMode}
-                  size="small"
-                  aria-label="toggle light or dark theme"
-                  sx={{
-                    ml: 1,
-                    p: 1,
-                    color: 'text.secondary',
-                    border: (t) => `1px solid ${t.palette.divider}`,
-                    borderRadius: 1,
-                    '&:hover': {
-                      color: ORANGE,
-                      borderColor: BORDER_ORANGE,
-                      bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-                    },
-                  }}
-                >
-                  {isDark ? (
-                    <LightModeOutlinedIcon sx={{ fontSize: 19 }} />
-                  ) : (
-                    <DarkModeOutlinedIcon sx={{ fontSize: 19 }} />
-                  )}
-                </IconButton>
-              </Tooltip>
-
               <Button
                 variant="outlined"
                 onClick={() => handleNavClick('contact')}
                 sx={{
-                  ml: 1,
+                  ml: 2,
                   borderColor: ORANGE,
                   color: ORANGE,
                   fontSize: '0.72rem',
@@ -225,27 +192,9 @@ export default function Navbar({ activeSection = 'home', onSelectSection, onTrig
             </Box>
           )}
 
-          {/* Mobile Right Controls: Theme Button + Menu Toggle */}
+          {/* Mobile Right Controls: Menu Toggle */}
           {isMobile && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <IconButton
-                onClick={toggleColorMode}
-                size="small"
-                aria-label="toggle light or dark theme"
-                sx={{
-                  color: 'text.primary',
-                  border: (t) => `1px solid ${t.palette.divider}`,
-                  p: 0.8,
-                  borderRadius: 1,
-                }}
-              >
-                {isDark ? (
-                  <LightModeOutlinedIcon fontSize="small" />
-                ) : (
-                  <DarkModeOutlinedIcon fontSize="small" />
-                )}
-              </IconButton>
-
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <IconButton onClick={() => setOpen(true)} sx={{ color: 'text.primary' }}>
                 <MenuIcon />
               </IconButton>

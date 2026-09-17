@@ -10,37 +10,16 @@ import { getAppTheme } from './theme';
 import { ColorModeContext } from './ColorModeContext';
 
 export default function MuiThemeProvider({ children }) {
-  const [mode, setMode] = useState('dark');
-
-  // Load user preference from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedMode = localStorage.getItem('portfolio_color_mode');
-      if (savedMode === 'light' || savedMode === 'dark') {
-        setMode(savedMode);
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-        setMode('light');
-      }
-    } catch (_) {}
-  }, []);
-
+  const mode = 'dark';
   const colorMode = useMemo(
     () => ({
-      mode,
-      toggleColorMode: () => {
-        setMode((prevMode) => {
-          const nextMode = prevMode === 'dark' ? 'light' : 'dark';
-          try {
-            localStorage.setItem('portfolio_color_mode', nextMode);
-          } catch (_) {}
-          return nextMode;
-        });
-      },
+      mode: 'dark',
+      toggleColorMode: () => {},
     }),
-    [mode]
+    []
   );
 
-  const activeTheme = useMemo(() => getAppTheme(mode), [mode]);
+  const activeTheme = useMemo(() => getAppTheme('dark'), []);
 
   const [{ cache }] = useState(() => {
     const emotionCache = createCache({ key: 'mui' });
