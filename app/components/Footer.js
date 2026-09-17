@@ -22,8 +22,8 @@ export default function Footer() {
     <Box
       component="footer"
       sx={{
-        borderTop: `1px solid ${BORDER_SUBTLE}`,
-        bgcolor: '#070707',
+        borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+        bgcolor: 'background.paper',
         py: 4,
       }}
     >

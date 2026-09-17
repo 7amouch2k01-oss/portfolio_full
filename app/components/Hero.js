@@ -54,13 +54,16 @@ export default function Hero({ onNavigate }) {
         }}
       />
 
-      {/* Gradient overlay — left text stays readable */}
+      {/* Gradient overlay — left text stays readable in both dark and light mode */}
       <Box
         aria-hidden
         sx={{
           position: 'absolute',
           inset: 0,
-          background: HERO_GRADIENT,
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? HERO_GRADIENT
+              : 'linear-gradient(90deg, rgba(249,250,251,0.98) 0%, rgba(249,250,251,0.90) 45%, rgba(249,250,251,0.65) 80%, rgba(249,250,251,0.4) 100%)',
         }}
       />
 
@@ -73,7 +76,8 @@ export default function Hero({ onNavigate }) {
           left: 0,
           right: 0,
           height: 120,
-          background: 'linear-gradient(to top, #0a0a0a 0%, transparent 100%)',
+          background: (theme) =>
+            `linear-gradient(to top, ${theme.palette.background.default} 0%, transparent 100%)`,
         }}
       />
 
@@ -125,7 +129,10 @@ export default function Hero({ onNavigate }) {
               mb: 1,
               textTransform: 'uppercase',
               color: 'transparent',
-              WebkitTextStroke: '1.5px rgba(255,255,255,0.55)',
+              WebkitTextStroke: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '1.5px rgba(255,255,255,0.55)'
+                  : '1.5px rgba(17,24,39,0.55)',
             }}
           >
             Amine

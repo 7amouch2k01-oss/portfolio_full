@@ -96,7 +96,7 @@ export default function Projects() {
       id="projects"
       sx={{
         py: { xs: 5, md: 8 },
-        bgcolor: '#0d0d0d',
+        bgcolor: 'background.default',
       }}
     >
       <Container maxWidth="lg">
