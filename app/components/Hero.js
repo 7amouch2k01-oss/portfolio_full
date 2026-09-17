@@ -34,7 +34,7 @@ export default function Hero({ onNavigate }) {
         bgcolor: 'background.default',
       }}
     >
-      {/* Background image — prominent developer workstation */}
+      {/* Background image — 100% full visibility, zero effects, zero filters */}
       <Box
         component="img"
         src="/hero-bg.webp"
@@ -49,33 +49,7 @@ export default function Hero({ onNavigate }) {
           objectPosition: 'center right',
           pointerEvents: 'none',
           userSelect: 'none',
-          opacity: 0.92,
-          filter: 'saturate(1.05) brightness(0.95)',
-        }}
-      />
-
-      {/* Subtle Gradient overlay — keeps left text crisp while keeping the workstation clearly visible */}
-      <Box
-        aria-hidden
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'linear-gradient(90deg, rgba(12,13,14,0.92) 0%, rgba(12,13,14,0.72) 40%, rgba(12,13,14,0.30) 70%, rgba(12,13,14,0.15) 100%)',
-        }}
-      />
-
-      {/* Bottom fade */}
-      <Box
-        aria-hidden
-        sx={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 120,
-          background: (theme) =>
-            `linear-gradient(to top, ${theme.palette.background.default} 0%, transparent 100%)`,
+          opacity: 1,
         }}
       />
 
