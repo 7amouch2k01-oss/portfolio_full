@@ -104,7 +104,7 @@ export async function GET(request) {
     return NextResponse.json({ success: true, contacts: serialized }, { status: 200 });
   } catch (error) {
     console.error('Contact GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch contacts.' }, { status: 500 });
+    return NextResponse.json({ error: `Database error: ${error.message || 'Failed to fetch contacts.'}` }, { status: 500 });
   }
 }
 
