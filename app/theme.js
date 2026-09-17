@@ -47,6 +47,7 @@ export function getAppTheme(mode = 'dark') {
       background: {
         default: bgDefault,
         paper: bgPaper,
+        elevated: bgElevated,
       },
       text: {
         primary: textPrimary,

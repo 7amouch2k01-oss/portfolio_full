@@ -144,8 +144,8 @@ export default function Projects() {
               <Box
                 onClick={() => handleOpenModal(project)}
                 sx={{
-                  bgcolor: BG_ELEVATED,
-                  border: `1px solid ${BORDER_SUBTLE}`,
+                  bgcolor: 'background.paper',
+                  border: (t) => `1px solid ${t.palette.divider}`,
                   borderRadius: 2,
                   overflow: 'hidden',
                   cursor: 'pointer',
@@ -156,7 +156,10 @@ export default function Projects() {
                   '&:hover': {
                     transform: 'translateY(-6px)',
                     borderColor: BORDER_ORANGE,
-                    boxShadow: `0 12px 36px rgba(232, 114, 21, 0.2)`,
+                    boxShadow: (t) =>
+                      t.palette.mode === 'dark'
+                        ? '0 12px 36px rgba(232, 114, 21, 0.2)'
+                        : '0 12px 28px rgba(0, 0, 0, 0.08)',
                     '& .project-img': {
                       transform: 'scale(1.05)',
                     },
@@ -220,7 +223,16 @@ export default function Projects() {
                 </Box>
 
                 {/* Title Container (Card contains ONLY photo & title as requested) */}
-                <Box sx={{ p: 2.5, bgcolor: BG_ELEVATED, flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{
+                    p: 2.5,
+                    bgcolor: (t) => t.palette.background.paper,
+                    flexGrow: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
                   <Typography
                     variant="h6"
                     sx={{
@@ -256,12 +268,15 @@ export default function Projects() {
         slotProps={{
           paper: {
             sx: {
-              bgcolor: BG_PAPER,
+              bgcolor: 'background.paper',
               color: 'text.primary',
               backgroundImage: 'none',
               border: `1px solid ${BORDER_ORANGE}`,
               borderRadius: 2,
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8)',
+              boxShadow: (t) =>
+                t.palette.mode === 'dark'
+                  ? '0 24px 60px rgba(0, 0, 0, 0.8)'
+                  : '0 20px 45px rgba(0, 0, 0, 0.15)',
               overflow: 'hidden',
             },
           },
@@ -397,8 +412,9 @@ export default function Projects() {
                       key={tech}
                       label={tech}
                       sx={{
-                        bgcolor: 'rgba(232, 114, 21, 0.1)',
-                        color: '#fff',
+                        bgcolor: (t) =>
+                          t.palette.mode === 'dark' ? 'rgba(232, 114, 21, 0.12)' : 'rgba(232, 114, 21, 0.08)',
+                        color: 'text.primary',
                         border: `1px solid ${BORDER_ORANGE}`,
                         fontWeight: 600,
                         fontSize: '0.75rem',

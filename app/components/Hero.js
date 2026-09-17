@@ -49,8 +49,11 @@ export default function Hero({ onNavigate }) {
           objectPosition: 'center right',
           pointerEvents: 'none',
           userSelect: 'none',
-          opacity: 0.65, // Softens the bright neon glare
-          filter: 'saturate(0.8) brightness(0.85)', // Comfortable on the eyes
+          opacity: (theme) => (theme.palette.mode === 'dark' ? 0.75 : 0.45),
+          filter: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'saturate(0.95) brightness(0.9)'
+              : 'saturate(0.9) brightness(1.05)',
         }}
       />
 
@@ -63,7 +66,7 @@ export default function Hero({ onNavigate }) {
           background: (theme) =>
             theme.palette.mode === 'dark'
               ? HERO_GRADIENT
-              : 'linear-gradient(90deg, rgba(249,250,251,0.98) 0%, rgba(249,250,251,0.90) 45%, rgba(249,250,251,0.65) 80%, rgba(249,250,251,0.4) 100%)',
+              : 'linear-gradient(90deg, rgba(249,250,251,0.98) 0%, rgba(249,250,251,0.92) 45%, rgba(249,250,251,0.70) 80%, rgba(249,250,251,0.4) 100%)',
         }}
       />
 
@@ -132,7 +135,7 @@ export default function Hero({ onNavigate }) {
               WebkitTextStroke: (theme) =>
                 theme.palette.mode === 'dark'
                   ? '1.5px rgba(255,255,255,0.55)'
-                  : '1.5px rgba(17,24,39,0.55)',
+                  : '1.5px rgba(17,24,39,0.7)',
             }}
           >
             Amine
@@ -195,7 +198,8 @@ export default function Hero({ onNavigate }) {
               startIcon={<EmailOutlinedIcon />}
               onClick={() => handleNav('contact')}
               sx={{
-                borderColor: 'rgba(255,255,255,0.25)',
+                borderColor: (theme) =>
+                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)',
                 color: 'text.primary',
                 fontWeight: 700,
                 letterSpacing: '0.1em',

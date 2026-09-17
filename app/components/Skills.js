@@ -63,15 +63,20 @@ function SkillCard({ skill }) {
   return (
     <Box
       sx={{
-        bgcolor: BG_ELEVATED,
-        border: `1px solid ${BORDER_SUBTLE}`,
+        bgcolor: 'background.paper',
+        border: (t) => `1px solid ${t.palette.divider}`,
+        borderRadius: 1.5,
         p: 2.5,
         position: 'relative',
         overflow: 'hidden',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
+        transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
         '&:hover': {
+          transform: 'translateY(-2px)',
           borderColor: BORDER_ORANGE,
-          boxShadow: `0 0 20px rgba(232,114,21,0.12)`,
+          boxShadow: (t) =>
+            t.palette.mode === 'dark'
+              ? '0 6px 20px rgba(232,114,21,0.15)'
+              : '0 6px 16px rgba(0,0,0,0.06)',
         },
         '&::before': {
           content: '""',
@@ -176,7 +181,7 @@ export default function Skills() {
               key={cat}
               value={cat}
               sx={{
-                border: `1px solid ${BORDER_SUBTLE} !important`,
+                border: (t) => `1px solid ${t.palette.divider} !important`,
                 color: 'text.secondary',
                 fontSize: '0.68rem',
                 letterSpacing: '0.12em',
@@ -189,7 +194,10 @@ export default function Skills() {
                   borderColor: `${ORANGE}60 !important`,
                   color: ORANGE,
                 },
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
+                '&:hover': {
+                  bgcolor: (t) =>
+                    t.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+                },
               }}
             >
               {CATEGORY_LABELS[cat]}
@@ -224,7 +232,7 @@ export default function Skills() {
           spacing={3}
           mt={7}
           sx={{
-            borderTop: `1px solid ${BORDER_SUBTLE}`,
+            borderTop: (t) => `1px solid ${t.palette.divider}`,
             pt: 4,
             justifyContent: 'space-between',
           }}

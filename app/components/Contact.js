@@ -116,10 +116,14 @@ export default function Contact() {
               component="form"
               onSubmit={handleSubmit}
               sx={{
-                bgcolor: BG_ELEVATED,
-                border: `1px solid ${BORDER_SUBTLE}`,
+                bgcolor: 'background.paper',
+                border: (t) => `1px solid ${t.palette.divider}`,
                 p: { xs: 3, md: 4 },
                 borderRadius: 2,
+                boxShadow: (t) =>
+                  t.palette.mode === 'dark'
+                    ? '0 8px 30px rgba(0,0,0,0.5)'
+                    : '0 8px 24px rgba(0,0,0,0.05)',
               }}
             >
               {status.type && (
@@ -223,9 +227,13 @@ export default function Contact() {
                     display: 'flex',
                     gap: 2,
                     p: 2.5,
-                    bgcolor: BG_ELEVATED,
-                    border: `1px solid ${BORDER_SUBTLE}`,
+                    bgcolor: 'background.paper',
+                    border: (t) => `1px solid ${t.palette.divider}`,
                     borderRadius: 2,
+                    boxShadow: (t) =>
+                      t.palette.mode === 'dark'
+                        ? '0 4px 20px rgba(0,0,0,0.3)'
+                        : '0 4px 16px rgba(0,0,0,0.04)',
                     '&:hover': { borderColor: BORDER_ORANGE },
                     transition: 'border-color 0.2s',
                   }}
@@ -313,7 +321,7 @@ export default function Contact() {
                       rel="noopener noreferrer"
                       sx={{
                         color: 'text.secondary',
-                        border: `1px solid ${BORDER_SUBTLE}`,
+                        border: (t) => `1px solid ${t.palette.divider}`,
                         borderRadius: 1,
                         '&:hover': { color: ORANGE, borderColor: BORDER_ORANGE, bgcolor: 'rgba(232,114,21,0.06)' },
                         transition: 'all 0.2s',

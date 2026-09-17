@@ -73,7 +73,7 @@ export default function About() {
               sx={{ color: 'text.secondary', lineHeight: 1.8, mb: 2.5, fontSize: '0.97rem' }}
             >
               I&apos;m{' '}
-              <Box component="span" sx={{ color: '#fff', fontWeight: 700 }}>
+              <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
                 Mohamed Amine Rzeigui
               </Box>
               {', '}
@@ -113,7 +113,12 @@ export default function About() {
             <Box
               sx={{
                 border: `1px solid ${BORDER_ORANGE}`,
-                bgcolor: BG_ELEVATED,
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: (t) =>
+                  t.palette.mode === 'dark'
+                    ? '0 8px 30px rgba(0,0,0,0.5)'
+                    : '0 8px 24px rgba(0,0,0,0.05)',
                 p: 3.5,
                 mb: 3,
               }}
