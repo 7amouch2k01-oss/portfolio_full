@@ -49,6 +49,8 @@ export default function Hero({ onNavigate }) {
           objectPosition: 'center right',
           pointerEvents: 'none',
           userSelect: 'none',
+          opacity: 0.65, // Softens the bright neon glare
+          filter: 'saturate(0.8) brightness(0.85)', // Comfortable on the eyes
         }}
       />
 

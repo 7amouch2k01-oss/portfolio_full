@@ -3,18 +3,19 @@
 import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 import { amber } from '@mui/material/colors';
 
-// Color tokens for the dark cyberpunk / tech aesthetic
-export const ORANGE = '#E87215';
-export const ORANGE_BRIGHT = '#FF8C00';
-export const ORANGE_DIM = '#C4601A';
-export const BG_DEFAULT = '#0a0a0a';
-export const BG_PAPER = '#111111';
-export const BG_ELEVATED = '#181818';
-export const BORDER_SUBTLE = 'rgba(255,255,255,0.06)';
-export const BORDER_ORANGE = 'rgba(232,114,21,0.35)';
+// Color tokens for a refined, eye-friendly warm amber / soft orange aesthetic
+export const ORANGE = '#E07A28'; // Softer, warmer amber-orange (less harsh saturation)
+export const ORANGE_BRIGHT = '#E88B3D';
+export const ORANGE_DIM = '#B85E18';
+export const BG_DEFAULT = '#0c0d0e'; // Slightly softer deep slate dark background
+export const BG_PAPER = '#141517';
+export const BG_ELEVATED = '#1b1d20';
+export const BORDER_SUBTLE = 'rgba(255,255,255,0.07)';
+export const BORDER_ORANGE = 'rgba(224,122,40,0.28)';
 
-export const ORANGE_GRADIENT = `linear-gradient(135deg, ${ORANGE} 0%, ${amber[700]} 100%)`;
-export const HERO_GRADIENT = `linear-gradient(90deg, rgba(10,10,10,0.97) 0%, rgba(10,10,10,0.82) 55%, rgba(10,10,10,0.0) 100%)`;
+export const ORANGE_GRADIENT = `linear-gradient(135deg, ${ORANGE} 0%, #D46A1A 100%)`;
+// Softened dark overlay so the neon tech circuit image doesn't blind the eyes
+export const HERO_GRADIENT = `linear-gradient(90deg, rgba(12,13,14,0.98) 0%, rgba(12,13,14,0.90) 45%, rgba(12,13,14,0.65) 80%, rgba(12,13,14,0.5) 100%)`;
 
 let theme = createTheme({
   palette: {
